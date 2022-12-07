@@ -71,17 +71,6 @@ my $cave;
 
 { package Cave;
 
- sub print {
-   my ($self) = @_;
-   for my $y (0 .. $self->{ max_y }) {
-     for my $x (0 .. $self->{ max_x }) {
-       print $self->{ points }[$y][$x] || '.';
-      }
-     print "\n";
-    }
-   return;
-  }
-
  # Check if this is the lowest risk for this point
  sub risk {
    my ($self, $y, $x, $risk) = @_;
@@ -101,6 +90,28 @@ my $cave;
    return ($path->{ pos_x } == $max && $path->{ pos_y } == $max) ? 1 : 0;
   }
 
+ sub tiles {
+   my ($self) = @_;
+
+   my $max = scalar @{ $self->{ points } } - 1;
+   for my $y (0 .. $max) {
+     for my $x (0 .. $max) {
+       my $val = $self->{ points }[$y][$x];
+       for my $tile (2 .. 9) {
+         $val++;
+         $val = 1 if ($val > 9);
+         for my $i (0 .. $tile - 1) {
+           next if ($tile - $i - 1 > 4 || $i > 4);
+           my $x_add = ($max + 1) * ($tile - $i - 1);
+           my $y_add = ($max + 1) * ($i);
+           $self->{ points }[$y + $y_add][$x + $x_add] = $val;
+          }
+        }
+      }
+    }
+   return $self;
+  }
+
  sub new {
   my ($class, $input_file) = @_;
   my $self = {
@@ -113,9 +124,10 @@ my $cave;
   for my $line (@lines) {
     push @{ $self->{ points } }, [ split( '', $line ) ];
    }
-  $self->{ max } = scalar @{ $self->{ points } } - 1;
-
   bless $self, $class;
+
+  $self->tiles();
+  $self->{ max } = scalar @{ $self->{ points } } - 1;
   return $self;
  }
 }
