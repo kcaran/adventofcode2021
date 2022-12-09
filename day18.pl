@@ -19,13 +19,25 @@ if ($input_data =~ /^\[/) {
  }
 
 my @pairs = path( $input_data )->lines_utf8( { chomp => 1 } );
-my $sum = Pair->new( shift @pairs )->reduce();
-for my $p (@pairs) {
-  $sum = Pair->new( "[" . $sum->print() . ",$p]" )->reduce();
-  print $sum->print(), "\n";
+my $sum = Pair->new( $pairs[0] )->reduce();
+for my $p (1 .. @pairs - 1) {
+  $sum = Pair->new( "[" . $sum->print() . "," . $pairs[$p] . "]" )->reduce();
  }
 
 print "The final sum is ", $sum->print(), "\n";
 print "The final magnitude is ", $sum->magnitude(), "\n";
+
+my $max = 0;
+for my $i (0 .. @pairs - 1) {
+  for my $j (0 .. @pairs - 1) {
+    next if ($i == $j);
+    $sum = Pair->new( "[" . $pairs[$i] . "," . $pairs[$j] . "]" )->reduce()->magnitude();
+    $max = $sum if ($sum > $max);
+    $j++;
+   }
+  $i++;
+ }
+
+print "The largest magnitude is $max\n";
 
 exit;
