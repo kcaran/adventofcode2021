@@ -22,116 +22,126 @@ use Path::Tiny;
   return $result;
  }
 
- sub reduce {
-   my ($self, $pair) = @_;
+ sub explode {
+   my ($self) = @_;
 
-   $pair = $self unless ($pair);
+   my $stack = [];
 
-   if ($pair->{ level } == 4) {
-       die "Did not compute" if (ref( $pair->{ x } ) || ref( $pair->{ y } ));
-       my $x = $pair->{ x };
-       my $y = $pair->{ y };
-       my $pairstr = $pair->print();
-       my $selfstr = $self->print();
-       my $idx = index( $selfstr, $pairstr );
-       my ($idx_x, $idx_y) = ($idx - 1, $idx + 5);
-       while ($idx_x > 0) {
-         if (substr( $selfstr, $idx_x, 1 ) =~ /(\d)/) {
-           substr( $selfstr, $idx_x, 1 ) = $1 + $x;
-           $idx_x = 0;
+   my $pair = $self;
+   while (@{ $stack } || $pair) {
+     while (ref($pair)) {
+       if ($pair->{ level } == 4) {
+         die "Did not compute" if (ref( $pair->{ x } ) || ref( $pair->{ y } ));
+         my $x = $pair->{ x };
+         my $y = $pair->{ y };
+         my $selfstr = $self->print();
+         my $idx = $pair->{ start };
+         substr( $selfstr, $idx, 5, 0 );
+         my ($idx_x, $idx_y) = ($idx - 1, $idx + 1);
+         while ($idx_x > 0) {
+           if (substr( $selfstr, $idx_x, 1 ) =~ /(\d)/) {
+             my $val = $1 + $x;
+             $idx_y++ if ($val > 9);
+             substr( $selfstr, $idx_x, 1, $1 + $x );
+             $idx_x = 0;
+            }
+           $idx_x--;
           }
-         $idx_x--;
-        }
 
-       while ($idx_y < length( $selfstr )) {
-         if (substr( $selfstr, $idx_y, 1 ) =~ /(\d)/) {
-           substr( $selfstr, $idx_y, 1 ) = $1 + $y;
-           $idx_y = length( $selfstr );
+         while ($idx_y < length( $selfstr )) {
+           if (substr( $selfstr, $idx_y, 2 ) =~ /(\d.)/) {
+             my $val = $1;
+             $val =~ s/^(\d+)/$1+$y/e;
+             substr( $selfstr, $idx_y, 2, $val );
+             $idx_y = length( $selfstr );
+            }
+           $idx_y++;
           }
-         $idx_y++;
-        }
 
-       substr( $selfstr, $idx, 5, '0' );
-       return Pair->new( $selfstr );
+         return Pair->new( $selfstr );
+        }
+       push @{ $stack }, $pair;
+       $pair = $pair->{ x };
       }
-
-   $pair->{ x }{ parent } = $pair if (ref($pair->{ x }));
-   $pair->{ y }{ parent } = $pair if (ref($pair->{ y }));
-
-   my $x = $pair->{ x };
-   $self = $self->reduce( $x ) if (ref($x));
-
-   my $y = $pair->{ y };
-   $self = $self->reduce( $y ) if (ref($y));
+     $pair = pop @{ $stack };
+     $pair = $pair->{ y };
+    }
 
    return $self;
   }
 
- sub reduce_old {
+ sub split {
    my ($self) = @_;
 
-   if ($self->{ level } == 4) {
-       die "Did not compute" if (ref( $self->{ x } ) || ref( $self->{ y } ));
-       my ($parent) = $self->{ parent };
-       my $x = $self->{ x };
-       my $y = $self->{ y };
-       while ($parent && ($x > 0 || $y > 0)) {
-         if (!ref($parent->{ x })) {
-           $parent->{ x } += $x if ($x > 0);
-           $x = -1;
-          }
-         if (!ref($parent->{ y })) {
-           $parent->{ y } += $y if ($y > 0);
-           $y = -1;
-          }
-         $parent = $parent->{ parent };
+   my $selfstr = $self->print();
+   return $self unless ($selfstr =~ /(\d{2})/);
+
+   my $split = $1;
+   my $idx = index( $selfstr, $split );
+   my $val = sprintf "[%d,%d]", $split/2, $split/2 + $split % 2;
+   substr( $selfstr, $idx, 2, $val );
+
+   return Pair->new( $selfstr );
+ }
+
+ sub reduce {
+   my ($self) = @_;
+
+   my $new;
+
+   do {
+     do {
+       $new = $self->explode();
+       if ($self != $new) {
+         $self = $new;
+         $new = undef;
         }
-       $self->{ parent }{ x } = 0 if ($self->{ parent }{ x } == $self);
-       $self->{ parent }{ y } = 0 if ($self->{ parent }{ y } == $self);
+      } while (!$new);
+     $new = $self->split();
+     if ($self != $new) {
+       $self = $new;
+       $new = undef;
       }
-
-     $self->{ x }{ parent } = $self if (ref($self->{ x }));
-     $self->{ y }{ parent } = $self if (ref($self->{ y }));
-
-     my $x = $self->{ x };
-     $x->reduce() if (ref($x));
-
-     my $y = $self->{ y };
-     $y->reduce() if (ref($y));
+    } while (!$new);
 
    return $self;
   }
 
  sub new {
-  my ($class, $input, $level) = @_;
+  my ($class, $input, $level, $index) = @_;
   my $self = {
     x => '',
     y => '',
-    print => '',
     input => '',
     level => $level || 0,
+    start => $index || 0,
+    index => $index || 0,
   };
 
-  $self->{ print } = $input;
   $self->{ input } = $input;
 
   while ((my $next = substr( $self->{ input }, 0, 1, '' )) ne ']') {
+    $self->{ index }++;
     if ($next eq '[') {
-      if (substr( $self->{ input }, 0, 1 ) =~ /\d/) {
-        $self->{ x } = substr( $self->{ input }, 0, 1, '' );
+      if ($self->{ input } =~ s/^(\d+)//) {
+        $self->{ x } = $1;
+        $self->{ index } += length( $1 );
        }
       else {
-        $self->{ x } = Pair->new( $self->{ input }, $self->{ level } + 1 );
+        $self->{ x } = Pair->new( $self->{ input }, $self->{ level } + 1, $self->{ index } );
         $self->{ input } = $self->{ x }{ input };
+        $self->{ index } = $self->{ x }{ index } + 1;
        }
      }
     elsif ($next eq ',') {
-      if (substr( $self->{ input }, 0, 1 ) =~ /\d/) {
-        $self->{ y } = substr( $self->{ input }, 0, 1, '' );
+      if ($self->{ input } =~ s/^(\d+)//) {
+        $self->{ y } = $1;
+        $self->{ index } += length( $1 );
        }
       else {
-        $self->{ y } = Pair->new( $self->{ input }, $self->{ level } + 1 );
+        $self->{ y } = Pair->new( $self->{ input }, $self->{ level } + 1, $self->{ index } );
         $self->{ input } = $self->{ y }{ input };
+        $self->{ index } = $self->{ y }{ index } + 1;
        }
      }
    }
