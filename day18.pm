@@ -36,28 +36,13 @@ use Path::Tiny;
          my $y = $pair->{ y };
          my $selfstr = $self->print();
          my $idx = $pair->{ start };
-         substr( $selfstr, $idx, 5, 0 );
-         my ($idx_x, $idx_y) = ($idx - 1, $idx + 1);
-         while ($idx_x > 0) {
-           if (substr( $selfstr, $idx_x, 1 ) =~ /(\d)/) {
-             my $val = $1 + $x;
-             $idx_y++ if ($val > 9);
-             substr( $selfstr, $idx_x, 1, $1 + $x );
-             $idx_x = 0;
-            }
-           $idx_x--;
-          }
-
-         while ($idx_y < length( $selfstr )) {
-           if (substr( $selfstr, $idx_y, 2 ) =~ /(\d.)/) {
-             my $val = $1;
-             $val =~ s/^(\d+)/$1+$y/e;
-             substr( $selfstr, $idx_y, 2, $val );
-             $idx_y = length( $selfstr );
-            }
-           $idx_y++;
-          }
-
+         my $pre = substr( $selfstr, 0, $idx );
+         my $post = substr( $selfstr, $idx );
+# What would I do with regexes? I struggled with substr for so long!
+         $post =~ s/^\[\d+,\d+\]//;
+         $pre =~ s/(\d+)(?=\D*$)/$1+$x/e;
+         $post =~ s/(\d+)/$1+$y/e;
+         $selfstr = $pre . '0' . $post;
          return Pair->new( $selfstr );
         }
        push @{ $stack }, $pair;
