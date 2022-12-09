@@ -11,10 +11,21 @@ use day18;
 
 my $input_data = $ARGV[0] || '[[[[[9,8],1],2],3],4]';
 
-my $number = Pair->new( $input_data );
+if ($input_data =~ /^\[/) {
+  my $number = Pair->new( $input_data );
+  my $reduced = $number->reduce();
+  print $reduced->print(), "\n";
+  exit;
+ }
 
-my $reduced = $number->reduce();
+my @pairs = path( $input_data )->lines_utf8( { chomp => 1 } );
+my $sum = Pair->new( shift @pairs )->reduce();
+for my $p (@pairs) {
+  $sum = Pair->new( "[" . $sum->print() . ",$p]" )->reduce();
+  print $sum->print(), "\n";
+ }
 
-print $reduced->print(), "\n";
+print "The final sum is ", $sum->print(), "\n";
+print "The final magnitude is ", $sum->magnitude(), "\n";
 
 exit;

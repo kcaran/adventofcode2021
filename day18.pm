@@ -22,6 +22,13 @@ use Path::Tiny;
   return $result;
  }
 
+ sub magnitude {
+   my ($self) = @_;
+
+   return 3 * (ref($self->{ x }) ? $self->{ x }->magnitude() : $self->{ x })
+        + 2 * (ref($self->{ y }) ? $self->{ y }->magnitude() : $self->{ y });
+  }
+
  sub explode {
    my ($self) = @_;
 
