@@ -27,7 +27,7 @@ my %energy = (
      # Check if we can move in
      my $room = ord( $pod ) - 65;
      next unless (!$self->{ rooms }[$room] || $self->{ rooms }[$room] eq $pod);
-     if ($idx <= $self->{ left }{ $pod }) {
+     if ($idx <= ($room * 2 + 2)) {
        $hall = $idx + 1;
        while (($self->{ hall }[$hall] ne lc($pod)) && ($self->{ hall }[$hall] !~ /[A-D]/)) {
          $hall++;
@@ -135,6 +135,12 @@ my %energy = (
    return @moves;
   }
 
+ sub sig {
+   my ($self) = @_;
+
+   my $key = join( '|', @{ $self->{ rooms } }, @{ $self->{ hall } } );
+  }
+
  sub rooms {
    my ($self) = @_;
 
@@ -147,8 +153,8 @@ my %energy = (
     rooms => [ '', '', '', '' ],
     energy => 0,
     hall => [ '', '', 'a', '', 'b', '', 'c', '', 'd', '', '' ],
-    left => { A => 0, B => 3, C => 5, D => 7 },
-    right => { A => 10, B => 5, C => 7, D => 10 },
+    left => { A => 0, B => 0, C => 0, D => 0 },
+    right => { A => 10, B => 10, C => 10, D => 10 },
   };
 
   for my $line (Path::Tiny::path( $input_file )->lines_utf8( { chomp => 1 } )) {
@@ -169,9 +175,15 @@ my $amp = Amphipods->new( $input_file );
 
 my $min_energy = -1;
 my @moves = ( $amp );
+my %found;
 while (@moves) {
+   print "There are ", scalar @moves, " possible moves\n";
    my $move = shift @moves;
    next unless ($move);
+   my $key = $move->sig();
+   next if ($found{ $key } && $found{ $key }->{ energy } <= $move->{ energy });
+   $found{ $key } = $move;
+
    if ($move->rooms eq 'AABBCCDD') {
      $min_energy = $move->{ energy } if ($min_energy < 0 || $min_energy > $move->{ energy });
     }
