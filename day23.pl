@@ -78,7 +78,7 @@ my %energy = (
        if ($self->{ hall }[$left] eq lc( $pod )
          && (!$self->{ rooms }[$room] || $self->{ rooms }[$room] eq $pod)) {
            my $next = Storable::dclone( $self );
-           $next->{ energy } += $out + (2 - length( $self->{ rooms }[$idx] )) * $energy{ $pod };
+           $next->{ energy } += $out + (2 - length( $self->{ rooms }[$room] )) * $energy{ $pod };
            $self->{ rooms }[$idx] .= $pod;
            $next->{ rooms }[$room] .= $pod;
            return ( $next );
@@ -111,7 +111,7 @@ my %energy = (
        if ($self->{ hall }[$right] eq lc( $pod )
          && (!$self->{ rooms }[$room] || $self->{ rooms }[$room] eq $pod)) {
            my $next = Storable::dclone( $self );
-           $next->{ energy } += $out + (2 - length( $self->{ rooms }[$idx] )) * $energy{ $pod };
+           $next->{ energy } += $out + (2 - length( $self->{ rooms }[$room] )) * $energy{ $pod };
            $self->{ rooms }[$idx] .= $pod;
            $next->{ rooms }[$room] .= $pod;
            return ( $next );
