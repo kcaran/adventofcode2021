@@ -113,8 +113,9 @@ use Path::Tiny;
  }
 
  sub new {
-  my ($class) = @_;
+  my ($class, $idx) = @_;
   my $self = {
+    idx => $idx,
     beacons => [],
   };
 
@@ -123,14 +124,29 @@ use Path::Tiny;
  }
 }
 
+sub count_beacons {
+  my (@sensors) = @_;
+
+  my %beacons;
+
+  for my $s (@sensors) {
+    for my $b (@{ $s->{ beacons } }) {
+      my $pos = join( ',', @{ $b } );
+      $beacons{ $pos } = 1;
+     }
+   }
+
+  return scalar keys %beacons;
+ }
+
 my $input_file = $ARGV[0] || 'input19.txt';
 my @sensors;
 my $sensor;
 for my $line (Path::Tiny::path( $input_file )->lines( { chomp => 1 } )) {
   next unless ($line);
-  if ($line =~ /scanner/) {
+  if ($line =~ /scanner (\d+)/) {
     push @sensors, $sensor if ($sensor);
-    $sensor = Sensor->new();
+    $sensor = Sensor->new( $1 );
    }
   else {
     my ($x, $y, $z) = split( ',', $line );
@@ -147,11 +163,14 @@ while (@sensors) {
   for my $i (0 .. @found - 1) {
     $m = $s->match( $found[$i] );
     if ($m) {
+      print "Matched scanner $m->{ idx }\n";
       push @found, $m;
       last;
      }
    }
   push @sensors, $s unless ($m);
  }
+
+print "There are ", count_beacons( @found ), " beacons found\n";
 
 exit;
