@@ -1,0 +1,57 @@
+https://www.ericburden.work/blog/2022/01/05/advent-of-code-2021-day-24/
+
+inp w			# 1
+div z 1
+add y 5
+
+inp w			# 2
+div z 1
+add y 14
+
+inp w			# 3
+div z 1
+add y 15
+
+inp w			# 4
+div z 1
+add y 16
+
+inp w			# 5
+div z 26
+add x -16
+
+inp w			# 6
+div z 26
+add x -11
+
+inp w			# 7
+div z 26
+add x -6
+
+inp w			# 8
+div z 1
+add y 13
+
+inp w			# 9
+div z 1
+add y 16
+
+inp w			# 10
+div z 26
+add x -10
+
+inp w			# 11
+div z 26
+add x -8
+
+inp w			# 12
+div z 26
+add x -11
+
+inp w			# 13
+div z 1
+add y 11
+
+inp w			# 14
+div z 26
+add x -15
