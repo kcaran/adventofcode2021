@@ -117,12 +117,30 @@ use Path::Tiny;
   my $self = {
     idx => $idx,
     beacons => [],
+    origin => [ 0, 0, 0 ],
   };
 
   bless $self, $class;
   return $self;
  }
 }
+
+sub scanner_distance {
+  my (@sensors) = @_;
+
+  my $max_dist = 0;
+  for my $i (0 .. @sensors - 2) {
+    for my $j ($i+1 .. @sensors - 1) {
+      my $dist = 0;
+      for my $dim (0 .. 2) {
+        $dist += abs( $sensors[$i]->{ origin }[$dim] - $sensors[$j]->{ origin }[$dim] );
+       }
+      $max_dist = $dist if ($dist > $max_dist);
+     }
+   }
+
+  return $max_dist;
+ }
 
 sub count_beacons {
   my (@sensors) = @_;
@@ -172,5 +190,7 @@ while (@sensors) {
  }
 
 print "There are ", count_beacons( @found ), " beacons found\n";
+
+print "The largest distance is ", scanner_distance( @found ), "\n";
 
 exit;
